@@ -1,0 +1,64 @@
+{
+  "nodes": [
+    {
+      "id": "step_01",
+      "action": "trigger_user_signup",
+      "name": "New User Registered",
+      "next": ["step_02"]
+    },
+    {
+      "id": "step_02",
+      "action": "condition_country",
+      "name": "Check Jurisdiction (EU/US/APAC)",
+      "next": ["step_03_gdpr", "step_03_us", "step_03_apac"]
+    },
+    {
+      "id": "step_03_gdpr",
+      "action": "function_gdpr_consent",
+      "name": "Prompt GDPR Consent Flow",
+      "next": ["step_04_kyc"]
+    },
+    {
+      "id": "step_03_us",
+      "action": "function_us_terms",
+      "name": "Log Terms Agreement",
+      "next": ["step_04_kyc"]
+    },
+    {
+      "id": "step_03_apac",
+      "action": "function_apac_reg",
+      "name": "Apply Local Tax Rules",
+      "next": ["step_04_kyc"]
+    },
+    {
+      "id": "step_04_kyc",
+      "action": "condition_kyc",
+      "name": "Run Identity/Passbase Check",
+      "next": ["step_05_pass", "step_05_fail", "step_05_retry"]
+    },
+    {
+      "id": "step_05_pass",
+      "action": "action_provision_account",
+      "name": "Activate DB Record & Provision Auth0",
+      "next": ["step_06_welcome"]
+    },
+    {
+      "id": "step_05_fail",
+      "action": "action_block_user",
+      "name": "Flag Fraud Account & Ban IP",
+      "next": []
+    },
+    {
+      "id": "step_05_retry",
+      "action": "action_resubmit_doc",
+      "name": "Send Identity Document Retry Email",
+      "next": ["step_04_kyc"]
+    },
+    {
+      "id": "step_06_welcome",
+      "action": "action_send_email",
+      "name": "Send Onboarding Email Sequence",
+      "next": []
+    }
+  ]
+}

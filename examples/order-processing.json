@@ -1,0 +1,126 @@
+[
+  {
+    "id": "node_webhook",
+    "type": "inject",
+    "name": "Shopify Order Webhook",
+    "wires": [["node_verify_sig"]]
+  },
+  {
+    "id": "node_verify_sig",
+    "type": "switch",
+    "name": "Verify HMAC Signature",
+    "wires": [["node_fraud_scoring"], ["node_reject_403"]]
+  },
+  {
+    "id": "node_reject_403",
+    "type": "http out",
+    "name": "HTTP 403 Forbidden",
+    "wires": []
+  },
+  {
+    "id": "node_fraud_scoring",
+    "type": "function",
+    "name": "Call Sift Fraud AI Engine",
+    "wires": [["node_fraud_router"]]
+  },
+  {
+    "id": "node_fraud_router",
+    "type": "switch",
+    "name": "Route Fraud Score",
+    "wires": [
+      ["node_auto_approve"],
+      ["node_manual_review"],
+      ["node_auto_cancel"]
+    ]
+  },
+  {
+    "id": "node_auto_cancel",
+    "type": "function",
+    "name": "Cancel Order & Issue Refund",
+    "wires": [["node_slack_alert"], ["node_email_cancel"]]
+  },
+  {
+    "id": "node_manual_review",
+    "type": "function",
+    "name": "Create Zendesk Fraud Ticket",
+    "wires": [["node_slack_alert"]]
+  },
+  {
+    "id": "node_auto_approve",
+    "type": "function",
+    "name": "Reserve ERP Inventory",
+    "wires": [["node_payment_charge"]]
+  },
+  {
+    "id": "node_payment_charge",
+    "type": "switch",
+    "name": "Stripe Charge Success?",
+    "wires": [["node_shipment_fanout"], ["node_payment_failed_err"]]
+  },
+  {
+    "id": "node_payment_failed_err",
+    "type": "http out",
+    "name": "HTTP 402 Payment Required",
+    "wires": []
+  },
+  {
+    "id": "node_shipment_fanout",
+    "type": "switch",
+    "name": "Parallel Order Dispatch",
+    "wires": [
+      ["node_shipstation_api"],
+      ["node_database_log"],
+      ["node_email_confirmation"],
+      ["node_analytics_mixpanel"],
+      ["node_crm_hubspot"]
+    ]
+  },
+  {
+    "id": "node_shipstation_api",
+    "type": "http request",
+    "name": "Generate Shipping Label",
+    "wires": [["node_success_200"]]
+  },
+  {
+    "id": "node_database_log",
+    "type": "function",
+    "name": "Log Transaction to PostgreSQL",
+    "wires": []
+  },
+  {
+    "id": "node_email_confirmation",
+    "type": "function",
+    "name": "Send Customer Email via SendGrid",
+    "wires": []
+  },
+  {
+    "id": "node_analytics_mixpanel",
+    "type": "function",
+    "name": "Track Conversion Event",
+    "wires": []
+  },
+  {
+    "id": "node_crm_hubspot",
+    "type": "function",
+    "name": "Update Customer LTV in HubSpot",
+    "wires": []
+  },
+  {
+    "id": "node_slack_alert",
+    "type": "function",
+    "name": "Notify #risk-ops Channel",
+    "wires": []
+  },
+  {
+    "id": "node_email_cancel",
+    "type": "function",
+    "name": "Send Order Cancellation Email",
+    "wires": []
+  },
+  {
+    "id": "node_success_200",
+    "type": "http out",
+    "name": "HTTP 200 Order Processed",
+    "wires": []
+  }
+]

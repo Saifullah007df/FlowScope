@@ -1,0 +1,76 @@
+[
+  {
+    "id": "iot_sensor_in",
+    "type": "inject",
+    "name": "MQTT Temperature Stream",
+    "wires": [["iot_filter_noise"]]
+  },
+  {
+    "id": "iot_filter_noise",
+    "type": "function",
+    "name": "Smooth Out Outlier Spikes",
+    "wires": [["iot_temp_check"]]
+  },
+  {
+    "id": "iot_temp_check",
+    "type": "switch",
+    "name": "Temperature Range Evaluator",
+    "wires": [
+      ["iot_normal_op"],
+      ["iot_warning_state"],
+      ["iot_critical_state"]
+    ]
+  },
+  {
+    "id": "iot_normal_op",
+    "type": "function",
+    "name": "Write Metrics to InfluxDB",
+    "wires": []
+  },
+  {
+    "id": "iot_warning_state",
+    "type": "function",
+    "name": "Log Thermal Warning Event",
+    "wires": [["iot_adjust_cooling"]]
+  },
+  {
+    "id": "iot_adjust_cooling",
+    "type": "switch",
+    "name": "Can Increase Fan Speed?",
+    "wires": [["iot_boost_fan"], ["iot_critical_state"]]
+  },
+  {
+    "id": "iot_boost_fan",
+    "type": "http request",
+    "name": "Send Actuator Fan Command",
+    "wires": [["iot_temp_check"]]
+  },
+  {
+    "id": "iot_critical_state",
+    "type": "switch",
+    "name": "Emergency Escalation",
+    "wires": [
+      ["iot_emergency_shutdown"],
+      ["iot_pagerduty_call"],
+      ["iot_sound_siren"]
+    ]
+  },
+  {
+    "id": "iot_emergency_shutdown",
+    "type": "http request",
+    "name": "Cut Main Circuit Breaker",
+    "wires": []
+  },
+  {
+    "id": "iot_pagerduty_call",
+    "type": "function",
+    "name": "Trigger PagerDuty Incident",
+    "wires": []
+  },
+  {
+    "id": "iot_sound_siren",
+    "type": "function",
+    "name": "Activate On-Site Siren",
+    "wires": []
+  }
+]
